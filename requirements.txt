@@ -7,3 +7,5 @@ numpy
 tqdm
 matplotlib
 jupyter
+opencv-python
+h5py
