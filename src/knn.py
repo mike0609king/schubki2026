@@ -1,15 +1,14 @@
+from sklearn.neighbors import KNeighborsClassifier
+
 class KNN:
-    # TODO parameters need to be added
-    def __init__(self):
-        raise NotImplementedError
+    def __init__(self, n_neighbors: int):
+        self.model = KNeighborsClassifier(n_neighbors=n_neighbors)
 
-    # TODO parameters need to be added
     def train(self, X, Y):
-        raise NotImplementedError
+        self.model.fit(X, Y)
 
-    # TODO parameters need to be added
     def predict(self, X):
-        raise NotImplementedError
+        return self.model.predict(X)
 
 # TODO
 def evaluate_knn(self, X, Y):
@@ -17,4 +16,7 @@ def evaluate_knn(self, X, Y):
     Data is split into train/validation/test, hyper parameter tuning of KNN,
     best parameters are returned.
     """
+    # hyper parameters: 
+    # 1. n_neighbors
+    # 2. StandardScalar()
     raise NotImplementedError
