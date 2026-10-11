@@ -30,10 +30,17 @@ class EmdDataset:
         return ret
 
     def get_data_by_ids(self, sub_id: int, ses_id: int):
+        """
+        :returns: Returns EEG and the ID of the videos that have been watched.
+        """
         assert 1 <= sub_id <= 6
         assert 1 <= ses_id <= 8
 
         data_dir = self._emd_dir / "derivatives" / "eeg" / f"sub-{sub_id:02d}"
-        file_name = Path(f"sub-{sub_id:02}_ses-{ses_id:02}_preprocessed_eeg.h5")
-        eeg = h5py.File(str(data_dir / file_name), "r")["eeg"][:]
-        return eeg
+        eeg_path = data_dir / Path(f"sub-{sub_id:02}_ses-{ses_id:02}_preprocessed_eeg.h5")
+        metadata_path = self._emd_dir / "derivatives" / "eeg" / f"sub-{sub_id:02d}" / f"sub-{sub_id:02}_eeg_metadata.npy"
+
+        eeg_metadata = np.load(str(metadata_path), allow_pickle=True).item()
+        stimulus_id = eeg_metadata["stimulus_id"][f"ses-{ses_id:02d}"]
+        eeg = h5py.File(str(eeg_path), "r")["eeg"][:]
+        return (eeg, stimulus_id)
