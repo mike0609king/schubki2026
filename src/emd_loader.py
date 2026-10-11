@@ -40,7 +40,10 @@ class EmdDataset:
         eeg_path = data_dir / Path(f"sub-{sub_id:02}_ses-{ses_id:02}_preprocessed_eeg.h5")
         metadata_path = self._emd_dir / "derivatives" / "eeg" / f"sub-{sub_id:02d}" / f"sub-{sub_id:02}_eeg_metadata.npy"
 
+        eeg = h5py.File(str(eeg_path), "r")["eeg"][:]
+
         eeg_metadata = np.load(str(metadata_path), allow_pickle=True).item()
         stimulus_id = eeg_metadata["stimulus_id"][f"ses-{ses_id:02d}"]
-        eeg = h5py.File(str(eeg_path), "r")["eeg"][:]
-        return (eeg, stimulus_id)
+
+        ch_names = eeg_metadata['ch_names']
+        return (eeg, ch_names, stimulus_id)
