@@ -3,6 +3,7 @@ pandas
 scikit-learn
 mne
 torch
+braindecode[hub]==1.8.1
 numpy
 tqdm
 matplotlib
