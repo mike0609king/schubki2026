@@ -6,15 +6,21 @@ from mne.filter import resample
 from braindecode.models import Labram
 from braindecode.models.labram import LABRAM_CHANNEL_ORDER
 
+
 @lru_cache(maxsize=1)
 def _pretrained_labram():
     return Labram.from_pretrained(
-        "braindecode/labram-pretrained",
-        use_mean_pooling=True
+        "braindecode/labram-pretrained", use_mean_pooling=True
     ).eval()
 
 
-def labram_embed(data: np.ndarray, sfreq: float, ch_names: list[str], batch_size: int = 64, device: str = "cpu"):
+def labram_embed(
+    data: np.ndarray,
+    sfreq: float,
+    ch_names: list[str],
+    batch_size: int = 64,
+    device: str = "cpu",
+):
     """
     Pretrained LaBraM embedding of EEG epochs, zero-padded to the model's 15 s window.
 
@@ -29,7 +35,9 @@ def labram_embed(data: np.ndarray, sfreq: float, ch_names: list[str], batch_size
     if data.ndim == 2:
         data = data[None]
     if data.shape[1] != len(ch_names):
-        raise ValueError(f"Data has {data.shape[1]} channels but {len(ch_names)} ch_names were given.")
+        raise ValueError(
+            f"Data has {data.shape[1]} channels but {len(ch_names)} ch_names were given."
+        )
 
     # Labram has no position embedding for some channels, those channels are droped
     known = {ch.upper() for ch in LABRAM_CHANNEL_ORDER}
@@ -47,15 +55,19 @@ def labram_embed(data: np.ndarray, sfreq: float, ch_names: list[str], batch_size
 
     model = _pretrained_labram().to(device)
     if data.shape[-1] > model.n_times:
-        raise ValueError(f"Epochs must be at most {model.n_times / sample_freqency:g} s long.")
+        raise ValueError(
+            f"Epochs must be at most {model.n_times / sample_freqency:g} s long."
+        )
     data = np.pad(data, ((0, 0), (0, 0), (0, model.n_times - data.shape[-1])))
 
-    # TODO Normalization of data. Not sure whether this one is correct. Should box normalization be applied?
+    # TODO Conversion into correct unit. Not sure whether this one is correct.
     data = data / 100.0
 
     embeddings = []
     with torch.no_grad():
         for start in range(0, len(data), batch_size):
-            X = torch.as_tensor(data[start:start + batch_size], dtype=torch.float32, device=device)
+            X = torch.as_tensor(
+                data[start : start + batch_size], dtype=torch.float32, device=device
+            )
             embeddings.append(model(X, ch_names=ch_names).cpu().numpy())
     return np.concatenate(embeddings)

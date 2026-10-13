@@ -5,6 +5,7 @@ import numpy as np
 import h5py
 import cv2
 
+
 class EmdDataset:
     def __init__(self, emd_dir: Path):
         self._emd_dir = emd_dir
@@ -20,7 +21,7 @@ class EmdDataset:
         frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        ret = np.empty((frame_count, height, width, 3), np.dtype('uint8'))
+        ret = np.empty((frame_count, height, width, 3), np.dtype("uint8"))
 
         for i in range(frame_count):
             has_next, ret[i] = cap.read()
@@ -37,13 +38,21 @@ class EmdDataset:
         assert 1 <= ses_id <= 8
 
         data_dir = self._emd_dir / "derivatives" / "eeg" / f"sub-{sub_id:02d}"
-        eeg_path = data_dir / Path(f"sub-{sub_id:02}_ses-{ses_id:02}_preprocessed_eeg.h5")
-        metadata_path = self._emd_dir / "derivatives" / "eeg" / f"sub-{sub_id:02d}" / f"sub-{sub_id:02}_eeg_metadata.npy"
+        eeg_path = data_dir / Path(
+            f"sub-{sub_id:02}_ses-{ses_id:02}_preprocessed_eeg.h5"
+        )
+        metadata_path = (
+            self._emd_dir
+            / "derivatives"
+            / "eeg"
+            / f"sub-{sub_id:02d}"
+            / f"sub-{sub_id:02}_eeg_metadata.npy"
+        )
 
         eeg = h5py.File(str(eeg_path), "r")["eeg"][:]
 
         eeg_metadata = np.load(str(metadata_path), allow_pickle=True).item()
         stimulus_id = eeg_metadata["stimulus_id"][f"ses-{ses_id:02d}"]
 
-        ch_names = eeg_metadata['ch_names']
+        ch_names = eeg_metadata["ch_names"]
         return (eeg, ch_names, stimulus_id)

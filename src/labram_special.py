@@ -3,7 +3,6 @@ Vibe coded labram which does not require zero padding. No idea whether this work
 Can perhaps be adapted in the future.
 """
 
-
 from functools import lru_cache
 from pathlib import Path
 
@@ -20,8 +19,8 @@ from emd_loader import EmdDataset
 # braindecode's export of the original labram-base checkpoint
 LABRAM_REPO = "braindecode/labram-pretrained"
 LABRAM_SFREQ = 200  # LaBraM was pre-trained on 200 Hz EEG
-PATCH_SIZE = 200    # one patch = 1 s at 200 Hz
-MAX_PATCHES = 16    # pretrained temporal embedding covers 16 patches (16 s)
+PATCH_SIZE = 200  # one patch = 1 s at 200 Hz
+MAX_PATCHES = 16  # pretrained temporal embedding covers 16 patches (16 s)
 
 
 @lru_cache(maxsize=1)
@@ -38,7 +37,9 @@ def _pretrained_labram(n_chans: int, n_times: int):
     # The checkpoint has LaBraM's 16 time slots, braindecode sizes the temporal
     # embedding to n_patches + 1 and only reads the first n_patches of it.
     time_embed = state["temporal_embedding"]
-    state["temporal_embedding"] = torch.cat((time_embed, torch.zeros_like(time_embed[:, :1])), dim=1)[:, :n_patches + 1]
+    state["temporal_embedding"] = torch.cat(
+        (time_embed, torch.zeros_like(time_embed[:, :1])), dim=1
+    )[:, : n_patches + 1]
 
     model = Labram(
         n_chans=n_chans,
@@ -53,11 +54,15 @@ def _pretrained_labram(n_chans: int, n_times: int):
     missing = [k for k in missing if not k.startswith("fc_norm.")]
     unexpected = [k for k in unexpected if not k.startswith("norm.")]
     if missing or unexpected:
-        raise RuntimeError(f"LaBraM weights did not match. Missing: {missing}, unexpected: {unexpected}")
+        raise RuntimeError(
+            f"LaBraM weights did not match. Missing: {missing}, unexpected: {unexpected}"
+        )
     return model
 
 
-def labram_embed(data, sfreq: float, ch_names: list[str], batch_size: int = 64, device: str = "cpu"):
+def labram_embed(
+    data, sfreq: float, ch_names: list[str], batch_size: int = 64, device: str = "cpu"
+):
     """
     Pretrained LaBraM embedding of EEG epochs.
 
@@ -69,7 +74,9 @@ def labram_embed(data, sfreq: float, ch_names: list[str], batch_size: int = 64, 
     if data.ndim == 2:
         data = data[None]
     if data.shape[1] != len(ch_names):
-        raise ValueError(f"data has {data.shape[1]} channels but {len(ch_names)} ch_names were given.")
+        raise ValueError(
+            f"data has {data.shape[1]} channels but {len(ch_names)} ch_names were given."
+        )
 
     if sfreq != LABRAM_SFREQ:
         data = resample(data, up=LABRAM_SFREQ, down=sfreq, axis=-1)
@@ -88,19 +95,31 @@ def labram_embed(data, sfreq: float, ch_names: list[str], batch_size: int = 64, 
     embeddings = []
     with torch.no_grad():
         for start in range(0, len(data), batch_size):
-            X = torch.as_tensor(data[start:start + batch_size], dtype=torch.float32, device=device)
+            X = torch.as_tensor(
+                data[start : start + batch_size], dtype=torch.float32, device=device
+            )
             embeddings.append(model(X, ch_names=ch_names).cpu().numpy())
     return np.concatenate(embeddings)
 
 
-def emd_labram_embeddings(emd_dir: Path, sub_id: int, ses_id: int, tmin=0.0, tmax=3.0, device="cpu"):
+def emd_labram_embeddings(
+    emd_dir: Path, sub_id: int, ses_id: int, tmin=0.0, tmax=3.0, device="cpu"
+):
     """
     LaBraM embeddings (n_trials, 200) and stimulus ids (n_trials,) of one EMD session.
     tmin, tmax: window relative to video onset in s, EMD epochs span -0.1 s to 3.5 s.
     """
-    meta_file = Path(emd_dir) / "derivatives" / "eeg" / f"sub-{sub_id:02d}" / f"sub-{sub_id:02d}_eeg_metadata.npy"
+    meta_file = (
+        Path(emd_dir)
+        / "derivatives"
+        / "eeg"
+        / f"sub-{sub_id:02d}"
+        / f"sub-{sub_id:02d}_eeg_metadata.npy"
+    )
     meta = np.load(meta_file, allow_pickle=True).item()
-    eeg = EmdDataset(Path(emd_dir)).get_data_by_ids(sub_id, ses_id)  # (n_trials, n_chans, n_times) in V
+    eeg = EmdDataset(Path(emd_dir)).get_data_by_ids(
+        sub_id, ses_id
+    )  # (n_trials, n_chans, n_times) in V
 
     # LaBraM has no position embedding for some of EMD's 128 channels
     known = {ch.upper() for ch in LABRAM_CHANNEL_ORDER}
@@ -109,5 +128,7 @@ def emd_labram_embeddings(emd_dir: Path, sub_id: int, ses_id: int, tmin=0.0, tma
     # convert volt to micro volt
     eeg = eeg[:, chans][..., window] * 1e6
 
-    embeddings = labram_embed(eeg, meta["args"].sfreq, [meta["ch_names"][i] for i in chans], device=device)
+    embeddings = labram_embed(
+        eeg, meta["args"].sfreq, [meta["ch_names"][i] for i in chans], device=device
+    )
     return embeddings, np.asarray(meta["stimulus_id"][f"ses-{ses_id:02d}"])
