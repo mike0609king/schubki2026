@@ -19,7 +19,7 @@ def _pretrained_biot(checkpoint: str):
 
 def _bipolar_montage(data: np.ndarray, ch_names: list[str], n_derivations: int):
     """
-    Conversion and ordering from referenctial EEG into bipolar EEG. The 
+    Conversion and ordering from referenctial EEG into bipolar EEG. The
     checkpoints of BIOT expect bipolar EEG layout.
     """
     index = {}
@@ -40,7 +40,11 @@ def biot_embed(
     ch_names: list[str],
     batch_size: int = 64,
     device: str = "cpu",
-    checkpoint: Literal["six-datasets-18chs"] | Literal["shhs-prest-18chs"] | Literal["prest-16chs"] = "six-datasets-18chs",
+    checkpoint: (
+        Literal["six-datasets-18chs"]
+        | Literal["shhs-prest-18chs"]
+        | Literal["prest-16chs"]
+    ) = "six-datasets-18chs",
 ):
     """
     Pretrained BIOT embedding of EEG epochs.

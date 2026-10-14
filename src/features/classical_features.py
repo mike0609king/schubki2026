@@ -13,7 +13,7 @@ def _freq_mask(freqs: np.ndarray, fmin: float, fmax: float | None) -> np.ndarray
 
 
 # TODO We might want further extractions of features, such as averaging certain
-# bands. Not sure whether 
+# bands. Not sure whether
 def psd_welch(
     data: np.ndarray,
     sfreq: float,
