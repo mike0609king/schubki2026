@@ -49,7 +49,8 @@ class EmdDataset:
             / f"sub-{sub_id:02}_eeg_metadata.npy"
         )
 
-        eeg = h5py.File(str(eeg_path), "r")["eeg"][:]
+        with h5py.File(str(eeg_path), "r") as f:
+            eeg = f["eeg"][:]
 
         eeg_metadata = np.load(str(metadata_path), allow_pickle=True).item()
         stimulus_id = eeg_metadata["stimulus_id"][f"ses-{ses_id:02d}"]
