@@ -3,7 +3,7 @@ Vibe coded labram which does not require zero padding. No idea whether this work
 Can perhaps be adapted in the future.
 """
 
-from functools import lru_cache
+from functools import cache
 from pathlib import Path
 
 import numpy as np
@@ -23,7 +23,7 @@ PATCH_SIZE = 200  # one patch = 1 s at 200 Hz
 MAX_PATCHES = 16  # pretrained temporal embedding covers 16 patches (16 s)
 
 
-@lru_cache(maxsize=1)
+@cache
 def _load_labram_weights():
     """
     We want this to be caches, because we likely use those weights a ton.
@@ -66,13 +66,11 @@ def labram_embed(
     """
     Pretrained LaBraM embedding of EEG epochs.
 
-    data: (n_epochs, n_chans, n_times) in µV, or (n_chans, n_times) for a single epoch.
+    data: (n_trials, n_channels, n_times) in µV.
     ch_names: channel names from LABRAM_CHANNEL_ORDER in the order of the data's channel axis.
-    Returns an array of shape (n_epochs, 200).
+    Returns an array of shape (n_trials, 200).
     """
     data = np.asarray(data, dtype=np.float64)
-    if data.ndim == 2:
-        data = data[None]
     if data.shape[1] != len(ch_names):
         raise ValueError(
             f"data has {data.shape[1]} channels but {len(ch_names)} ch_names were given."

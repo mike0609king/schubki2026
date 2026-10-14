@@ -1,4 +1,4 @@
-from functools import lru_cache
+from functools import cache
 
 import numpy as np
 import torch
@@ -7,7 +7,7 @@ from braindecode.models import Labram
 from braindecode.models.labram import LABRAM_CHANNEL_ORDER
 
 
-@lru_cache(maxsize=1)
+@cache
 def _pretrained_labram():
     return Labram.from_pretrained(
         "braindecode/labram-pretrained", use_mean_pooling=True
@@ -24,16 +24,13 @@ def labram_embed(
     """
     Pretrained LaBraM embedding of EEG epochs, zero-padded to the model's 15 s window.
 
-    :param data: (n_epochs, n_chans, n_times) in micro V, or (n_chans, n_times)
-    for a single epoch.
+    :param data: (n_trials, n_channels, n_times) in micro V.
     :param ch_names: Channel names in the order of the data's channel axis.
     Channels not in LABRAM_CHANNEL_ORDER.
 
-    :returns: Returns an array of shape (n_epochs, 200).
+    :returns: Returns an array of shape (n_trials, 200).
     """
     data = np.asarray(data, dtype=np.float64)
-    if data.ndim == 2:
-        data = data[None]
     if data.shape[1] != len(ch_names):
         raise ValueError(
             f"Data has {data.shape[1]} channels but {len(ch_names)} ch_names were given."
