@@ -5,7 +5,7 @@ import h5py
 from h5py import Dataset
 
 
-def save_feature(path: Path, data: np.ndarray, exists_ok: bool = False):
+def save_features(path: Path, data: np.ndarray, exists_ok: bool = False):
     """
     File is saved into a .h5 file.
     """
@@ -17,7 +17,7 @@ def save_feature(path: Path, data: np.ndarray, exists_ok: bool = False):
         f.create_dataset("data", data=data)
 
 
-def load_feature(path: Path) -> np.ndarray:
+def load_features(path: Path) -> np.ndarray:
     if not path.exists():
         raise FileNotFoundError(f"File {str(path)} does not exist!")
 
