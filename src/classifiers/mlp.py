@@ -41,7 +41,7 @@ class MLP(nn.Module):
         loss_fn = nn.CrossEntropyLoss()
         losses = []
 
-        super().train()
+        self.train()
         for _ in range(epochs):
             optimizer.zero_grad()
             logits = self(X)
@@ -52,12 +52,12 @@ class MLP(nn.Module):
 
         return losses
     def predict(self, X):
-        super().eval()
+        self.eval()
         with torch.no_grad():
             return self(X).argmax(dim=1)
 
 class MLPClassifier(ClassifierMixin, BaseEstimator):
-    def __init__(self, input_dim: int, hidden_dims: list[int], classes: int, dropout: float = 0.0, lr: float = 1e-3, epochs: int = 50, random_seed: int = 42):
+    def __init__(self, input_dim: int, classes: int, hidden_dims: list[int] = (32,), dropout: float = 0.0, lr: float = 1e-3, epochs: int = 50, random_seed: int = 42):
         self.input_dim = input_dim
         self.hidden_dims = hidden_dims
         self.classes = classes
@@ -99,14 +99,14 @@ def evaluate_random_mlp(X, Y, random_seed: int = 42):
 
     pipeline = Pipeline([
     ("scaler", StandardScaler()),
-    ("mlp", MLPClassifier(input_dim=X_train.shape[1], classes=len(np.unique(Y_train)), random_state=42))
+    ("mlp", MLPClassifier(input_dim=X_train.shape[1], classes=len(np.unique(Y_train)), random_seed=42))
     ])
 
     param_grid = {
-        "hidden_dims": [(32,), (64,), (64, 32), (128, 64)],
-        "dropout": [0.0, 0.2, 0.4],
-        "lr": [1e-2, 1e-3, 1e-4],
-        "epochs": [30, 50],
+        "mlp__hidden_dims": [(32,), (64,), (64, 32), (128, 64)],
+        "mlp__dropout": [0.0, 0.2, 0.4],
+        "mlp__lr": [1e-2, 1e-3, 1e-4],
+        "mlp__epochs": [30, 50],
     }
 
     grid_search = GridSearchCV(estimator=pipeline, param_grid=param_grid, scoring="accuracy", cv=5, refit=True, n_jobs=1, verbose=2)
