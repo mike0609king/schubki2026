@@ -43,10 +43,6 @@ class ClipModel(nn.Module):
             nn.LayerNorm(projection_dim)
         )
         self.logit_scale = nn.Parameter(torch.tensor(math.log(1.0 / temperature)))
-
-    @property
-    def temperature(self):
-        return 1.0 / self.logit_scale.exp()
     
     def forward(self, eeg_features, video_features):
 
@@ -86,7 +82,7 @@ def evaluate_clip(features_path: str, weight_decay: float, learning_rate: float,
                   device: str = "cpu", save_path: str | None = None):
 
     if save_path is None:
-        timestamp = datetime.now().strftime("%Y-%m-%d_%H:%M.%S")
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         save_path = f"../weights/clip_model_{timestamp}.pth"
 
     features_dir = Path(features_path)
@@ -199,14 +195,14 @@ def store_clip_weights(model, save_path: str):
     print(f"CLIP model weights saved to: {save_path}")
 
 def load_clip_model(save_path: str, eeg_dim: int, video_dim: int, projection_dim: int = 256, 
-                    dropout: float = 0.1, device: str = "cpu"):
+                    dropout: float = 0.1, temperature: float = 0.07, device: str = "cpu"):
     """Load the trained CLIP model weights."""
 
     path = Path(save_path)
     if not path.is_file():
         raise FileNotFoundError(f"Model weights not found: {path}")
     
-    model = ClipModel(eeg_dim=eeg_dim, video_dim=video_dim, projection_dim=projection_dim, dropout=dropout)
+    model = ClipModel(eeg_dim=eeg_dim, video_dim=video_dim, projection_dim=projection_dim, dropout=dropout, temperature=temperature)
 
     state_dict = torch.load(path, map_location=device, weights_only=True)
 
