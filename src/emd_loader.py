@@ -23,12 +23,16 @@ class EmdDataset:
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         ret = np.empty((frame_count, height, width, 3), np.dtype("uint8"))
 
+        # CAP_PROP_FRAME_COUNT is only an estimate; keep only the frames actually read.
+        n_read = 0
         for i in range(frame_count):
-            has_next, ret[i] = cap.read()
+            has_next, frame = cap.read()
             if not has_next:
                 break
+            ret[i] = frame
+            n_read += 1
         cap.release()
-        return ret
+        return ret[:n_read]
 
     def get_data_by_ids(self, sub_id: int, ses_id: int):
         """
