@@ -1,6 +1,7 @@
 from pathlib import Path
 import copy
 import math
+import numpy as np
 
 import torch
 from torch import nn, optim
@@ -76,20 +77,14 @@ def prepare_loaders(dataset, batch_size: int, random_seed: int):
 
     return train_loader, validation_loader, test_loader
 
-def evaluate_clip(features_path: str, weight_decay: float, learning_rate: float, 
+def evaluate_clip(eeg_features: np.ndarray, video_features: np.ndarray, weight_decay: float, learning_rate: float, 
                   epochs: int, projection_dim: int = 256, batch_size: int = 32, 
                   dropout: float = 0.1, temperature: float = 0.07, random_seed: int = 42,
                   device: str = "cpu", save_path: str | None = None):
 
     if save_path is None:
-        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         save_path = f"../weights/clip_model_{timestamp}.pth"
-
-    features_dir = Path(features_path)
-    # TODO: load eeg_features, video_features as pairs
-    eeg_features, video_features = None # replace -> load_features_as_pair()
-    if eeg_features is None or video_features is None:
-        raise ValueError(f"load_features_as_pair() not implemented yet!")
 
     eeg_dim = eeg_features.shape[-1]
     video_dim = video_features.shape[-1]
@@ -189,10 +184,10 @@ def evaluate_clip(features_path: str, weight_decay: float, learning_rate: float,
 def store_clip_weights(model, save_path: str):
     """Save the trained CLIP model weights."""
 
-    save_path = Path(save_path)
-    save_path.parent.mkdir(parents=True, exist_ok=True)
-    torch.save(model.state_dict(), save_path)
-    print(f"CLIP model weights saved to: {save_path}")
+    sp = Path(save_path)
+    sp.parent.mkdir(parents=True, exist_ok=True)
+    torch.save(model.state_dict(), sp)
+    print(f"CLIP model weights saved to: {sp}")
 
 def load_clip_model(save_path: str, eeg_dim: int, video_dim: int, projection_dim: int = 256, 
                     dropout: float = 0.1, temperature: float = 0.07, device: str = "cpu"):
