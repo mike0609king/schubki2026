@@ -11,10 +11,10 @@ else:
     from sklearn.svm import SVC as SVM
 
 class SVC(BaseEstimator, ClassifierMixin):
-    def __init__(self, C: float = 1, kernel: str = "linear", max_iter: int = 1000, random_seed: int = 42):
+    def __init__(self, C: float = 1, kernel: str = "linear", random_seed: int = 42):
         self.C = C
         self.kernel = kernel
-        self.max_iter = max_iter
+        self.max_iter = -1
         self.random_seed = random_seed
 
     def fit(self, X, Y):
@@ -42,7 +42,6 @@ def evaluate_svc(X, Y, random_seed: int = 42):
     param_grid = {
         "svc__C": [1, 0.1, 0.01, 0.001, 0.0001, 0.00001],
         "svc__kernel": ["linear", "rbf"],
-        "svc__max_iter": [1000, 5000, 10000]
     }
 
     # Grid_search over possible parameter variations via 5-fold cross validation
@@ -58,5 +57,3 @@ def evaluate_svc(X, Y, random_seed: int = 42):
     print("Test accuracy:", test_accuracy)
 
     return grid_search.best_params_
-
-
