@@ -15,6 +15,9 @@ def _pretrained_videomae_processor():
     return VideoMAEVideoProcessor.from_pretrained("MCG-NJU/videomae-base")
 
 def videomae_embed(data: list[np.ndarray], batch_size: int = 8, device: str = "cpu") -> np.ndarray:
+    """
+    :param data: List of videos in format (T, H, W, 3).
+    """
     if len(data) == 0:
         raise ValueError("No videos provided.")
 
