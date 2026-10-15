@@ -3,7 +3,7 @@ from mne.io import Raw
 
 
 # TODO We might need to compute nequist frequency here or outside for cutoff
-def bandpass_filter(data: Raw, fmin: float = 0.1, fmax: float = 75.0):
+def bandpass_filter(data: Raw, fmin: float = 0.1, fmax: float = 75.0) -> Raw:
     ret = data.copy().filter(l_freq=fmin, h_freq=fmax, fir_design="firwin")
     return ret
 
@@ -62,3 +62,12 @@ def ica(data: Raw):
     raw_clean = raw_eeg.copy()
     ica.apply(raw_clean)
     return raw_clean
+
+
+def preprocess(data: Raw) -> Raw:
+    data = bandpass_filter(data, fmin=0.1, fmax=75.0)
+    data = notch_filter(data, notch_freqs=50.0)
+    #TODO Should we apply this
+    data = smoothing(data, smooth_lp=35.0)
+    data = ica(data)
+    return data
