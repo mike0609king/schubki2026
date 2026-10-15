@@ -15,11 +15,11 @@ class CCA_Classifier():
         self.cca = None
 
     def fit(self, X_train, Z_train):
-        cca = CCA(n_components=self.n_components, scale=True, max_iter=self.max_iter)
-        cca.fit(X_train, Z_train)
-        return cca
+        self.cca = CCA(n_components=self.n_components, scale=True, max_iter=self.max_iter)
+        self.cca.fit(X_train, Z_train)
+        return self
 
-    def predict(self, cca, eeg_features, candidate_video_featues):
+    def predict(self, eeg_features, candidate_video_featues):
         """
         eeg_features: (1, n_eeg_features)
         candidate_video_features: (n_candidates, n_video_features)
@@ -34,7 +34,7 @@ class CCA_Classifier():
         n_candidates = len(candidate_video_featues)
 
         repeated_eeg = np.repeat(eeg_features, repeats=n_candidates, axis=0)
-        eeg_proj, video_proj = cca.transform(repeated_eeg, candidate_video_featues)
+        eeg_proj, video_proj = self.cca.transform(repeated_eeg, candidate_video_featues)
 
         # Cosine Sim
         eeg_proj = normalize(eeg_proj, axis=1)

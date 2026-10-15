@@ -10,3 +10,5 @@ matplotlib
 jupyter
 opencv-python
 h5py
+transformers
+open-clip-torch
