@@ -1,9 +1,14 @@
-from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import accuracy_score
 from sklearn.base import BaseEstimator, ClassifierMixin
+
+USE_CUML = True
+if USE_CUML:
+    from cuml.dask.neighbors import KNeighborsClassifier
+else:
+    from sklearn.neighbors import KNeighborsClassifier
 
 class KNN(BaseEstimator, ClassifierMixin):
     def __init__(self, n_neighbors: int = 5, weights: str = "uniform"):

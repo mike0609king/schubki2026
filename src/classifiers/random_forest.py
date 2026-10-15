@@ -1,9 +1,13 @@
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import accuracy_score
 from sklearn.base import BaseEstimator, ClassifierMixin
+
+USE_CUML = True
+if USE_CUML:
+    from cuml.dask.ensemble import RandomForestClassifier
+else:
+    from sklearn.ensemble import RandomForestClassifier
 
 class RandomForest(BaseEstimator, ClassifierMixin):
     def __init__(self, max_depth: int = 1, n_estimators: int = 100, random_seed: int = 42):

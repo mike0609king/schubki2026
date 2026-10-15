@@ -1,9 +1,14 @@
-from sklearn.svm import SVC as SVM
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import accuracy_score
 from sklearn.base import BaseEstimator, ClassifierMixin
+
+USE_CUML = True
+if USE_CUML:
+    from cuml.svm import SVC as SVM
+else:
+    from sklearn.svm import SVC as SVM
 
 class SVC(BaseEstimator, ClassifierMixin):
     def __init__(self, C: float = 1, kernel: str = "linear", max_iter: int = 1000, random_seed: int = 42):
@@ -13,6 +18,7 @@ class SVC(BaseEstimator, ClassifierMixin):
         self.random_seed = random_seed
 
     def fit(self, X, Y):
+
         self.model = SVM(C=self.C, kernel=self.kernel, max_iter=self.max_iter, random_state=self.random_seed)
         self.model.fit(X, Y)
         return self

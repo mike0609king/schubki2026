@@ -12,3 +12,4 @@ opencv-python
 h5py
 transformers
 open-clip-torch
+cuml-cu13
