@@ -7,22 +7,22 @@ from PIL import Image
 from transformers import AutoImageProcessor, AutoModel
 
 @cache
-def _pretrained_dinov2():
-    return AutoModel.from_pretrained("facebook/dinov2-base").eval()
+def _pretrained_dinov3():
+    return AutoModel.from_pretrained("facebook/dinov3-vitb16-pretrain-lvd1689m").eval()
 
 @cache
-def _pretrained_dinov2_processor():
-    return AutoImageProcessor.from_pretrained("facebook/dinov2-base")
+def _pretrained_dinov3_processor():
+    return AutoImageProcessor.from_pretrained("facebook/dinov3-vitb16-pretrain-lvd1689m")
 
-def dinov2_embed(data: list[np.ndarray], batch_size: int = 8, num_frames: int = 8, device: str = "cpu") -> np.ndarray:
+def dinov3_embed(data: list[np.ndarray], batch_size: int = 8, num_frames: int = 8, device: str = "cpu") -> np.ndarray:
     """
     :param data: List of videos in format (T, H, W, 3).
     """
     if len(data) == 0:
         raise ValueError("No videos provided.")
 
-    model = _pretrained_dinov2().to(device)
-    processor = _pretrained_dinov2_processor()
+    model = _pretrained_dinov3().to(device)
+    processor = _pretrained_dinov3_processor()
 
     embeddings = []
 
