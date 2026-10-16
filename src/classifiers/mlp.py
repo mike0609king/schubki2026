@@ -56,6 +56,8 @@ class MLP(nn.Module):
         with torch.no_grad():
             return self(X).argmax(dim=1)
 
+from sklearn.preprocessing import LabelEncoder
+
 class MLPClassifier(ClassifierMixin, BaseEstimator):
     def __init__(self, input_dim: int, classes: int, hidden_dims: list[int] = (32,), dropout: float = 0.0, lr: float = 1e-3, epochs: int = 50, random_seed: int = 42):
         self.input_dim = input_dim
@@ -68,17 +70,21 @@ class MLPClassifier(ClassifierMixin, BaseEstimator):
 
     def fit(self, X, y):
         X = np.asarray(X, dtype=np.float32)
-        y = np.asarray(y, dtype=np.int64)
+        y = np.asarray(y)
+
+        self.label_encoder_ = LabelEncoder()
+        y_encoded = self.label_encoder_.fit_transform(y)
+        num_classes = len(self.label_encoder_.classes_)
 
         torch.manual_seed(self.random_seed)
 
-        self.model_ = MLP(input_dim=self.input_dim, hidden_dims=list(self.hidden_dims), classes=self.classes, dropout=self.dropout)
+        self.model_ = MLP(input_dim=self.input_dim, hidden_dims=list(self.hidden_dims), classes=num_classes, dropout=self.dropout)
 
         X_tensor = torch.as_tensor(X, dtype=torch.float32)
-        y_tensor = torch.as_tensor(y, dtype=torch.long)
+        y_tensor = torch.as_tensor(y_encoded, dtype=torch.long)
 
         self.losses_ = self.model_.fit(X_tensor, y_tensor, epochs=self.epochs, lr=self.lr)
-        self.classes_ = np.arange(self.classes)
+        self.classes_ = self.label_encoder_.classes_
         return self
 
     def predict(self, X):
@@ -88,7 +94,9 @@ class MLPClassifier(ClassifierMixin, BaseEstimator):
         X_tensor = torch.as_tensor(X, dtype=torch.float32)
 
         predictions = self.model_.predict(X_tensor)
-        return predictions.cpu().numpy()
+        
+        # Map predictions back to original label space if needed
+        return self.label_encoder_.inverse_transform(predictions.cpu().numpy())
 
 def evaluate_random_mlp(X, Y, random_seed: int = 42):
     """
