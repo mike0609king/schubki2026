@@ -7,6 +7,7 @@ import torch
 from torch import nn, optim
 from torch.nn import functional as F
 from torch.utils.data import Dataset, DataLoader, random_split
+from sklearn.preprocessing import StandardScaler
 
 import datetime
 
@@ -46,7 +47,7 @@ class ClipModel(nn.Module):
         self.logit_scale = nn.Parameter(torch.tensor(math.log(1.0 / temperature)))
     
     def forward(self, eeg_features, video_features):
-
+           
         eeg_embeddings = F.normalize(self.eeg_projection(eeg_features), dim=-1)
         video_embeddings = F.normalize(self.video_projection(video_features), dim=-1)
 
@@ -77,6 +78,42 @@ def prepare_loaders(dataset, batch_size: int, random_seed: int):
 
     return train_loader, validation_loader, test_loader
 
+@torch.no_grad()
+def compute_clip_accuracy(model, data_loader, device, logit_scale):
+    """Computes Top-1 and Top-5 retrieval accuracy for a contrastive batch."""
+    model.eval()
+    correct_top1 = 0
+    correct_top5 = 0
+    total_samples = 0
+
+    for eeg, video in data_loader:
+        eeg = eeg.to(device)
+        video = video.to(device)
+
+        eeg_emb, video_emb = model(eeg, video)
+        
+        # Compute similarity matrix (batch_size x batch_size)
+        logits = torch.matmul(eeg_emb, video_emb.T) * logit_scale
+        
+        # Ground truth diagonal labels
+        batch_size = eeg.size(0)
+        labels = torch.arange(batch_size, device=device)
+
+        # Top-1 accuracy (argmax prediction)
+        preds = logits.argmax(dim=1)
+        correct_top1 += (preds == labels).sum().item()
+
+        # Top-5 accuracy (fully vectorized & robust)
+        k = min(5, batch_size)
+        topk_preds = logits.topk(k, dim=1).indices
+        correct_top5 += (topk_preds == labels.unsqueeze(1)).any(dim=1).sum().item()
+
+        total_samples += batch_size
+
+    top1_acc = correct_top1 / total_samples
+    top5_acc = correct_top5 / total_samples
+    return top1_acc, top5_acc
+
 def evaluate_clip(eeg_features: np.ndarray, video_features: np.ndarray, weight_decay: float, learning_rate: float, 
                   epochs: int, projection_dim: int = 256, batch_size: int = 32, 
                   dropout: float = 0.1, temperature: float = 0.07, random_seed: int = 42,
@@ -84,7 +121,7 @@ def evaluate_clip(eeg_features: np.ndarray, video_features: np.ndarray, weight_d
 
     if save_path is None:
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        save_path = f"../weights/clip_model_{timestamp}.pth"
+        save_path = f"./weights/clip_model_{timestamp}.pth"
 
     eeg_dim = eeg_features.shape[-1]
     video_dim = video_features.shape[-1]
@@ -141,9 +178,13 @@ def evaluate_clip(eeg_features: np.ndarray, video_features: np.ndarray, weight_d
                 validation_samples += batch_n
 
         validation_loss = validation_loss_sum / validation_samples
+        val_top1, val_top5 = compute_clip_accuracy(model, validation_loader, device, logit_scale)
 
-        print(f"Epoch {epoch + 1}/{epochs} | Training Loss: {training_loss:.4f} | Validation Loss: {validation_loss:.4f}")
-
+        print(f"Epoch {epoch + 1}/{epochs} | "
+              f"Train Loss: {training_loss:.4f} | "
+              f"Val Loss: {validation_loss:.4f} | "
+              f"Val Top-1 Acc: {val_top1*100:.2f}% | Val Top-5 Acc: {val_top5*100:.2f}%")
+        
         # Keep the checkpoint with the best validation loss
         if validation_loss < best_validation_loss:
             best_validation_loss = validation_loss
@@ -173,13 +214,27 @@ def evaluate_clip(eeg_features: np.ndarray, video_features: np.ndarray, weight_d
             test_samples += batch_n
 
     test_loss = test_loss_sum / test_samples
+    test_top1, test_top5 = compute_clip_accuracy(model, test_loader, device, logit_scale)
 
-    print(f"Best Validation Loss: {best_validation_loss:.4f}")
-    print(f"Test Loss: {test_loss:.4f}")
+    print(f"\nBest Validation Loss: {best_validation_loss:.4f}")
+    print(f"Test Top-1 Accuracy: {test_top1*100:.2f}% | Test Top-5 Accuracy: {test_top5*100:.2f}%")
 
     store_clip_weights(model=model, save_path=save_path)
 
     return test_loss
+
+def prepare_clip_inputs(X, Y, video_ids, video_features):
+    row_of_id = {v_id: idx for idx, v_id in enumerate(video_ids)}
+    Z_video_list = [video_features[row_of_id[v_id]] for v_id in Y]
+    Z_video = np.array(Z_video_list, dtype=np.float32)
+    
+    eeg_scaler = StandardScaler()
+    video_scaler = StandardScaler()
+    
+    X_scaled = eeg_scaler.fit_transform(np.asarray(X, dtype=np.float32))
+    Z_scaled = video_scaler.fit_transform(Z_video)
+    
+    return X_scaled, Z_scaled
 
 def store_clip_weights(model, save_path: str):
     """Save the trained CLIP model weights."""
