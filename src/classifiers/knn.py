@@ -1,6 +1,6 @@
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.model_selection import train_test_split, GridSearchCV, RandomizedSearchCV
 from sklearn.metrics import accuracy_score
 from sklearn.base import BaseEstimator, ClassifierMixin
 
@@ -38,7 +38,7 @@ def evaluate_knn(X, Y, random_seed: int = 42):
     }
 
     # Grid_search over possible parameter variations via 5-fold cross validation
-    grid_search = GridSearchCV(estimator=pipeline, param_grid=param_grid, cv=5, scoring="accuracy", n_jobs=-1)
+    grid_search = RandomizedSearchCV(estimator=pipeline, param_distributions=param_grid, n_iter=10, scoring="accuracy", cv=5, refit=True, n_jobs=-1, verbose=2)
     grid_search.fit(X_train, Y_train)
 
     print("Best parameters:", grid_search.best_params_)

@@ -1,13 +1,8 @@
 from sklearn.pipeline import Pipeline
-from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.model_selection import train_test_split, GridSearchCV, RandomizedSearchCV
 from sklearn.metrics import accuracy_score
 from sklearn.base import BaseEstimator, ClassifierMixin
-
-USE_CUML = True
-if USE_CUML:
-    from cuml.dask.ensemble import RandomForestClassifier
-else:
-    from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier
 
 class RandomForest(BaseEstimator, ClassifierMixin):
     def __init__(self, max_depth: int = 1, n_estimators: int = 100, random_seed: int = 42):
@@ -41,7 +36,7 @@ def evaluate_random_forest(X, Y, random_seed: int = 42):
     }
 
     # Grid_search over possible parameter variations via 5-fold cross validation
-    grid_search = GridSearchCV(estimator=pipeline, param_grid=param_grid, cv=5, scoring="accuracy", n_jobs=-1)
+    grid_search = RandomizedSearchCV(estimator=pipeline, param_distributions=param_grid, n_iter=10, scoring="accuracy", cv=5, refit=True, n_jobs=-1, verbose=2)
     grid_search.fit(X_train, Y_train)
 
     print("Best parameters:", grid_search.best_params_)

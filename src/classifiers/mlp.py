@@ -6,7 +6,7 @@ import numpy as np
 
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.model_selection import train_test_split, GridSearchCV, RandomizedSearchCV
 from sklearn.metrics import accuracy_score
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.validation import check_is_fitted
@@ -111,13 +111,13 @@ def evaluate_random_mlp(X, Y, random_seed: int = 42):
     ])
 
     param_grid = {
-        "mlp__hidden_dims": [(32,), (64,), (64, 32), (128, 64)],
-        "mlp__dropout": [0.0, 0.2, 0.4],
-        "mlp__lr": [1e-2, 1e-3, 1e-4],
+        "mlp__hidden_dims": [(64,), (128, 64)],
+        "mlp__dropout": [0.2, 0.4],
+        "mlp__lr": [1e-3, 1e-4],
         "mlp__epochs": [30, 50],
     }
 
-    grid_search = GridSearchCV(estimator=pipeline, param_grid=param_grid, scoring="accuracy", cv=5, refit=True, n_jobs=1, verbose=2)
+    grid_search = RandomizedSearchCV(estimator=pipeline, param_distributions=param_grid, n_iter=10, scoring="accuracy", cv=5, refit=True, n_jobs=-1, verbose=2)
 
     grid_search.fit(X_train, Y_train)
 
