@@ -50,25 +50,26 @@ class CCA_Classifier(BaseEstimator, ClassifierMixin):
         return self
 
     def predict(self, eeg_features, candidate_video_features):
-        n_candidates = len(candidate_video_features)
-        repeated_eeg = np.repeat(eeg_features, repeats=n_candidates, axis=0)
+        scores_matrix = self.get_score_matrix(eeg_features, candidate_video_features)
+        predicted_index = int(np.argmax(scores_matrix[0]))
+        return predicted_index, scores_matrix[0]
+
+    def get_score_matrix(self, X_test, candidate_video_features):
+        """Computes the full (n_test_samples, n_candidates) similarity score matrix efficiently."""
+        X_scaled = self.eeg_scaler.transform(X_test)
+        Z_scaled = self.video_scaler.transform(candidate_video_features)
         
-        # Transform through the exact same pipeline steps
-        eeg_scaled = self.eeg_scaler.transform(repeated_eeg)
-        video_scaled = self.video_scaler.transform(candidate_video_features)
+        X_pca = self.eeg_pca.transform(X_scaled)
+        Z_pca = self.video_pca.transform(Z_scaled)
         
-        eeg_pca = self.eeg_pca.transform(eeg_scaled)
-        video_pca = self.video_pca.transform(video_scaled)
-        
-        eeg_proj, video_proj = self.cca.transform(eeg_pca, video_pca)
+        eeg_proj, video_proj = self.cca.transform(X_pca, Z_pca)
 
         eeg_proj = normalize(eeg_proj, axis=1)
         video_proj = normalize(video_proj, axis=1)
-        scores = np.sum(eeg_proj * video_proj, axis=1)
-
-        predicted_index = int(np.argmax(scores))
-        return predicted_index, scores
-
+        
+        score_matrix = np.dot(eeg_proj, video_proj.T)
+        return score_matrix
+    
 def _fit(X, Y, video_ids, video_features, params):
     row_of_id = {video_id: row for row, video_id in enumerate(video_ids)}
     Z = video_features[[row_of_id[video_id] for video_id in Y]]
@@ -136,7 +137,9 @@ def evaluate_cca(X_train, Y_train, train_video_ids, train_video_features,
     print("Test accuracy:", test_accuracy)
     print("Chance level:", 1 / len(test_video_ids))
 
-    return model, best_params
+    test_score_matrix = model.get_score_matrix(X_test, test_video_features)
+
+    return model, best_params, test_score_matrix
 
 def save_submission_ranked_list(model, X_test, test_video_ids, test_video_features, output_path):
 
