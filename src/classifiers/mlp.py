@@ -66,6 +66,9 @@ class DeepEmbeddingClassifier(BaseEstimator, ClassifierMixin):
         X_train = np.asarray(X_train, dtype=np.float32)
         Z_train = np.asarray(Z_train, dtype=np.float32)
 
+        self.eeg_scaler = StandardScaler()
+        X_scaled = self.eeg_scaler.fit_transform(X_train)
+
         torch.manual_seed(self.random_seed)
 
         self.model_ = DeepEmbeddingMLP(
@@ -75,7 +78,7 @@ class DeepEmbeddingClassifier(BaseEstimator, ClassifierMixin):
             dropout=self.dropout
         )
 
-        X_tensor = torch.as_tensor(X_train, dtype=torch.float32)
+        X_tensor = torch.as_tensor(X_scaled, dtype=torch.float32)
         Z_tensor = torch.as_tensor(Z_train, dtype=torch.float32)
 
         self.losses_ = self.model_.fit(X_tensor, Z_tensor, epochs=self.epochs, lr=self.lr)
