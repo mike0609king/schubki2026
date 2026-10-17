@@ -1,4 +1,4 @@
-from typing import cast
+from pathlib import Path
 
 import numpy as np
 from sklearn.cross_decomposition import CCA
@@ -66,7 +66,6 @@ class CCA_Classifier(BaseEstimator, ClassifierMixin):
         video_proj = normalize(video_proj, axis=1)
         scores = np.sum(eeg_proj * video_proj, axis=1)
 
-
         predicted_index = int(np.argmax(scores))
         return predicted_index, scores
 
@@ -85,22 +84,28 @@ def _accuracy(model, X, Y, video_ids, video_features):
     print(f"Accuracy: {correct / len(Y)}")
     return correct / len(Y)
 
-def evaluate_cca(X, Y, video_ids, video_features, random_seed: int = 42):
+def evaluate_cca(X_train, Y_train, train_video_ids, train_video_features,
+                  X_test, Y_test, test_video_ids, test_video_features, 
+                  random_seed: int = 42):
     """
     Data is split into train/validation/test, hyper parameter tuning of CCA,
     best parameters are returned.
 
-    X: (n_trials, n_eeg_features)
-    Y: (n_trials,) id of the video watched in each trial
-    video_ids: (n_videos,) ids of the candidate videos, same values as Y
-    video_features: (n_videos, n_video_features), row i belongs to video_ids[i]
-    """
-    video_ids = np.asarray(video_ids)
-    video_features = np.asarray(video_features)
+    X_train: (n_trials, n_eeg_features)
+    Y_train: (n_trials,) id of the video watched in each trial
+    train_video_ids: (n_videos,) ids of the candidate videos, same values as Y
+    train_video_features: (n_videos, n_video_features), row i belongs to video_ids[i]
 
-    X_train, X_test, Y_train, Y_test = train_test_split(
-        X, Y, test_size=0.1, random_state=random_seed, stratify=Y
-    )
+    X_test: (n_trials, n_eeg_features)
+    Y_test: (n_trials,) id of the video watched in each trial
+    test_video_ids: (n_videos,) ids of the candidate videos, same values as Y
+    test_video_features: (n_videos, n_video_features), row i belongs to video_ids[i]
+    """
+    train_video_ids = np.asarray(train_video_ids)
+    test_video_ids = np.asanyarray(test_video_ids)
+
+    train_video_features = np.asarray(train_video_features)
+    test_video_features = np.asarray(test_video_features)
 
     param_grid = {
         #"n_components": [2, 4, 8, 16, 32],
@@ -114,8 +119,8 @@ def evaluate_cca(X, Y, video_ids, video_features, random_seed: int = 42):
     for params in ParameterGrid(param_grid):
         fold_scores = []
         for train_idx, val_idx in cv.split(X_train, Y_train):
-            model = _fit(X_train[train_idx], Y_train[train_idx], video_ids, video_features, params)
-            fold_scores.append(_accuracy(model, X_train[val_idx], Y_train[val_idx], video_ids, video_features))
+            model = _fit(X_train[train_idx], Y_train[train_idx], train_video_ids, train_video_features, params)
+            fold_scores.append(_accuracy(model, X_train[val_idx], Y_train[val_idx], train_video_ids, train_video_features))
 
         score = float(np.mean(fold_scores))
         print(f"{params}: CV accuracy {score:.4f}")
@@ -125,10 +130,36 @@ def evaluate_cca(X, Y, video_ids, video_features, random_seed: int = 42):
     print("Best parameters:", best_params)
     print("Best CV accuracy:", best_score)
 
-    model = _fit(X_train, Y_train, video_ids, video_features, best_params)
-    test_accuracy = _accuracy(model, X_test, Y_test, video_ids, video_features)
+    model = _fit(X_train, Y_train, train_video_ids, train_video_features, best_params)
+    test_accuracy = _accuracy(model, X_test, Y_test, test_video_ids, test_video_features)
 
     print("Test accuracy:", test_accuracy)
-    print("Chance level:", 1 / len(video_ids))
+    print("Chance level:", 1 / len(test_video_ids))
 
-    return best_params
+    return model, best_params
+
+def save_submission_ranked_list(model, X_test, test_video_ids, test_video_features, output_path):
+
+    # output_path = "../predictions/sub-05_ranked_candidate_list.npy"
+    # output_path = "../predictions/sub-06_ranked_candidate_list.npy"
+
+    test_video_ids = np.asarray(test_video_ids, dtype=np.int_)
+    test_video_features = np.asarray(test_video_features)
+    
+    ranked_candidate_matrix = []
+    
+    for eeg_features in X_test:
+        _, scores = model.predict(eeg_features[None, :], test_video_features)
+        sorted_indices = np.argsort(scores)[::-1]
+        
+        # Map indices to actual video IDs (ensuring they are integer IDs like 1001-1102)
+        sorted_video_ids = test_video_ids[sorted_indices]
+        
+        ranked_candidate_matrix.append(sorted_video_ids)
+        
+    ranked_candidate_array = np.array(ranked_candidate_matrix, dtype=np.int_)
+    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+    np.save(output_path, ranked_candidate_array)
+    print(f"Successfully saved ranked candidate list of shape {ranked_candidate_array.shape} to {output_path}")
+    
+    return ranked_candidate_array
