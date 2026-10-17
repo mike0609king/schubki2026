@@ -23,6 +23,7 @@ def psd_welch(
     fmax: float,
     window_sec: float = 2.0,
     overlap: float = 0.5,
+    apply_log: bool = False,
 ):
     """
     Power spectral density with Welch's method: the signal is cut into
@@ -35,10 +36,9 @@ def psd_welch(
     that are not needed.
     :param window_sec: Window segment length in seconds
     :param overlap: Fraction of overlap between consecutive segments
-    :param average: Try out "mean" or "median"; median is more robust to artefacts
 
-    :returns: Returns (psd, freqs), psd of shape (n_trials, n_channels, n_freqs) and
-    freqs of shape (n_freqs,)
+    :returns: Returns (psd, freqs), linear psd of shape
+    (n_trials, n_channels, n_freqs) and freqs of shape (n_freqs,)
     """
     if data.ndim != 3:
         raise ValueError(
@@ -55,10 +55,54 @@ def psd_welch(
         axis=-1,
     )
     mask = _freq_mask(freqs, fmin, fmax)
+
     psd, freqs = psd[:, :, mask], freqs[mask]
-    np.maximum(psd, 1e-20, out=psd)
-    np.log10(psd, out=psd)
+    if apply_log:
+        np.maximum(psd, 1e-20, out=psd)
+        np.log10(psd, out=psd)
     return psd, freqs
+
+
+BANDS = {
+    "delta": (1.0, 4.0),
+    "theta": (4.0, 8.0),
+    "alpha": (8.0, 13.0),
+    "beta": (13.0, 30.0),
+    "gamma": (30.0, 45.0),
+}
+
+
+def band_power(
+    data: np.ndarray,
+    sfreq: float,
+    bands: dict[str, tuple[float, float]] = BANDS,
+    window_sec: float = 2.0,
+    overlap: float = 0.5,
+):
+    """
+    Log band power: the Welch PSD is averaged within each frequency band. Much
+    lower dimensional than the full PSD.
+
+    :param data: (n_trials, n_channels, n_times) EEG
+    :param sfreq: Sampling frequency in Hz
+    :param bands: Maps band name to (fmin, fmax) in Hz.
+    :param window_sec, overlap: Passed on to psd_welch
+    """
+    fmin = min(lo for lo, _ in bands.values())
+    fmax = max(hi for _, hi in bands.values())
+    psd, freqs = psd_welch(data, sfreq, fmin, fmax, window_sec, overlap, apply_log=False)
+
+    powers = []
+    for name, (lo, hi) in bands.items():
+        mask = (freqs >= lo) & (freqs < hi)
+        if not mask.any():
+            raise ValueError(f"Band {name} ({lo}-{hi} Hz) contains no PSD bin")
+        powers.append(psd[..., mask].mean(axis=-1))
+    bp = np.stack(powers, axis=-1)
+
+    np.maximum(bp, 1e-20, out=bp)
+    np.log10(bp, out=bp)
+    return bp
 
 
 def cwt_morlet(
@@ -138,8 +182,6 @@ def dwt(data, wavelet="db4", level=7, drop_finest=2):
 
     # Relative energy profile per channel
     relative_energies = energies / total_energy
-    relative_energies = relative_energies.reshape(len(data), -1)
-
     power = np.maximum(relative_energies, 1e-20, out=relative_energies)
     np.log10(relative_energies, out=relative_energies)
     return relative_energies
