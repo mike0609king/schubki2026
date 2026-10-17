@@ -185,3 +185,33 @@ def dwt(data, wavelet="db4", level=7, drop_finest=2):
     power = np.maximum(relative_energies, 1e-20, out=relative_energies)
     np.log10(relative_energies, out=relative_energies)
     return relative_energies
+
+
+def _compute_higuchi_fd(x, kmax=5):
+    n = len(x)
+    L = np.zeros(kmax)
+    for k in range(1, kmax + 1):
+        Lk = 0.0
+        for m in range(k):
+            n_max = int(np.floor((n - m - 1) / k))
+            if n_max < 1:
+                continue
+            d = np.abs(np.diff(x[m::k]))
+            norm = (n - 1) / (n_max * k)
+            Lk += np.sum(d) * norm / k
+        L[k - 1] = Lk / k
+    L = L[L > 0]
+    if len(L) < 2:
+        return 1.0
+    ks = np.arange(1, len(L) + 1)
+    poly = np.polyfit(np.log(1.0 / ks), np.log(L), 1)
+    return poly[0]
+
+
+def hfd(data: np.ndarray, kmax=5) -> np.ndarray:
+    n_trials, n_channels, _ = data.shape
+    out = np.empty((n_trials, n_channels), dtype=np.float32)
+    for i in range(n_trials):
+        for c in range(n_channels):
+            out[i, c] = _compute_higuchi_fd(data[i, c], kmax=kmax)
+    return out
