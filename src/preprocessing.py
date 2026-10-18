@@ -2,7 +2,6 @@ import mne
 from mne.io import Raw
 
 
-# TODO We might need to compute nequist frequency here or outside for cutoff
 def bandpass_filter(data: Raw, fmin: float = 0.1, fmax: float = 75.0) -> Raw:
     ret = data.copy().filter(l_freq=fmin, h_freq=fmax, fir_design="firwin")
     return ret
@@ -18,7 +17,6 @@ def notch_filter(data: Raw, notch_freqs: float = 50.0) -> Raw:
     return raw_notched
 
 
-# TODO implement a necessary smoothing filter
 def smoothing(data: Raw, smooth_lp: float = 35.0) -> Raw:
     raw_smooth = data.copy().filter(
         l_freq=None, h_freq=smooth_lp, fir_design="firwin", verbose=False
@@ -26,11 +24,8 @@ def smoothing(data: Raw, smooth_lp: float = 35.0) -> Raw:
     return raw_smooth
 
 
-# TODO Perhaps ICA needs some sort of playgroud to review the results. In this
-# case we need a jupyter notebook with some useful visualizations pre-implemented.
 def ica(data: Raw):
     raw_eeg = data.copy().pick("eeg")
-    # TODO fastica vs infomax vs picard
     ica = mne.preprocessing.ICA(
         n_components=25, method="fastica", random_state=42, max_iter="auto"
     )
@@ -39,7 +34,6 @@ def ica(data: Raw):
 
     # Try automatic detection of EOG-like components
     # Since there are no formal EOG channels, we use a frontal EEG channel ('Fp1') as a proxy
-    # TODO during competition we need to make sure this channel exists
     proxy_eog = "Fp1" if "Fp1" in raw_eeg.ch_names else None
     if proxy_eog:
         print(f"Using {proxy_eog} as a proxy channel for EOG artifact detection...")
@@ -67,7 +61,6 @@ def ica(data: Raw):
 def preprocess(data: Raw) -> Raw:
     data = bandpass_filter(data, fmin=0.1, fmax=75.0)
     data = notch_filter(data, notch_freqs=50.0)
-    #TODO Should we apply this
     data = smoothing(data, smooth_lp=35.0)
     data = ica(data)
     return data
