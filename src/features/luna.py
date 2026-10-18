@@ -1,8 +1,3 @@
-# TODO mostly vibe coded and not checked in detail
-# => Check whether adding the layernorm is really necessary. braindecode does
-# not seem to have those layernorms implemented, but the checkpoints
-# and the luna model repository have additional layernorms.
-
 from functools import cache
 
 import numpy as np

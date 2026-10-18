@@ -57,7 +57,6 @@ def labram_embed(
         )
     data = np.pad(data, ((0, 0), (0, 0), (0, model.n_times - data.shape[-1])))
 
-    # TODO Conversion into correct unit. Not sure whether this one is correct.
     data = data / 100.0
 
     embeddings = []

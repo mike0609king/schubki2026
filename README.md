@@ -5,12 +5,13 @@ machine learning pipeline.
 
 ## Structure
 - `src`. Contains source code to quickly access implementations, which are shared across notebooks.
-- `notebooks`. Contains notebooks. Most notebooks in this directory is for testing the machine learning pipeline. The final machine learning pipeline can be found in
-    - TODO: Generating the matrices for subjects `...`
-    - TODO: Test
+- `notebooks`. Contains notebooks. Most notebooks in this directory is for testing the machine learning pipeline.
 - `data`. This directory is used for preprocessed Data. The final predictions
 for each subject are available in this directory. Some directories such as the
 given data and intermediate results have not been pushed because of their size.
+
+## Reproducibility
+((TODO explain reproducibility))
 
 ## ML pipeline
 
@@ -21,9 +22,6 @@ The machine learning pipeline can be divided into
 
 those will be explained in the following sections.
 
-(( TODO give an overview of the machine learning model and the ensemble learning 
-approach. ))
-
 ## Preprocessing
 The given data was already preprocessed by applying a band pass filter and
 removal of blink components. We applied the following preprocessing steps
@@ -31,26 +29,21 @@ in addition
 - bandpass filter 0.5 - 75.0 Hz
 - notch filter with 50 Hz to remove powerline interference
 
-((TODO remove averaging over channels.))
-
 Because of our feature extraction process the data has not been heavily
 processed.
 
 ## Feature extraction
 
-The machine learning model uses both extracted EEG features as well as features
-for the video.
+The machine learning model uses both extracted EEG features as well as features for the video.
 
 ### EEG features
 
 **EEG foundation models.** The following three EEG foundation models have been used
-- LaBraM ((TODO cite))
+- CBraMod [7]
+- LaBraM [8]
 - modified LaBraM. LaBraM is modified to use 3 second long EEG signals instead of
 adding zero padding.
-- LUNA ((TODO cite))
-- CBraMod
-
-**Engineered features.** ((TODO wait for tests))
+- LUNA [9]
 
 ### Video features
 
@@ -117,7 +110,7 @@ EEG input: per-trial embeddings from four sources (`schubki_cbramod`, `schubki_l
 
 ### 1. CCA [4] classifier
 
-Canonical correlation analysis between the EEG embeddings and the video features (CCA_Classifier in src/classifiers/cca.py). EEG trials and candidate videos are projected into the shared canonical space and scored by similarity there.
+Canonical correlation analysis between the EEG embeddings and the video features (CCA\_Classifier in src/classifiers/cca.py). EEG trials and candidate videos are projected into the shared canonical space and scored by similarity there.
 
 ### 2. CLIP-style [5] contrastive model
 
@@ -153,10 +146,12 @@ Train accuracy is measured on the training trials against all 1000 training vide
 - **Ridge** on raw EEG was the best. It is the only approach with clearly above-chance test retrieval (about 4 to 6% top-1 and 15 to 25% top-5), so it is our submission. Strong regularization (alpha 1e4 to 1e5) seems to matter for generalization here.
 
 ## References
-[1] Ilharco, G., Wortsman, M., Wightman, R., Gordon, C., Carlini, N., Taori, R., Dave, A., Shankar, V., Namkoong, H., Miller, J., Hajishirzi, H., Farhadi, A., & Schmidt, L. (2021). OpenCLIP (Version v0.1) [Computer software]. https://doi.org/10.5281/zenodo.5143773
+[1]  CHERTI, Mehdi, et al. Reproducible scaling laws for contrastive language-image learning. In: 2023 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR). IEEE, 2023. p. 2818-2829.
 [2] OQUAB, Maxime, et al. Dinov2: Learning robust visual features without supervision. arXiv preprint arXiv:2304.07193, 2023.
 [3] KRIZHEVSKY, Alex; SUTSKEVER, Ilya; HINTON, Geoffrey E. Imagenet classification with deep convolutional neural networks. Advances in neural information processing systems, 2012, 25.
 [4] HOTELLING, Harold. Relations between two sets of variates. In: Breakthroughs in statistics: methodology and distribution. New York, NY: Springer New York, 1992. p. 162-190.
 [5] RADFORD, Alec, et al. Learning transferable visual models from natural language supervision. In: International conference on machine learning. PmLR, 2021. p. 8748-8763.
 [6] OORD, Aaron van den; LI, Yazhe; VINYALS, Oriol. Representation learning with contrastive predictive coding. arXiv preprint arXiv:1807.03748, 2018.
-
+[7] WANG, Jiquan, et al. Cbramod: A criss-cross brain foundation model for eeg decoding. In: International conference on learning representations. 2025. p. 75310-75346.
+[8] JIANG, Wei-Bang; ZHAO, Liming; LU, Bao-Liang. Large brain model for learning generic representations with tremendous EEG data in BCI. In: International Conference on Learning Representations. 2024. p. 16405-16426.
+[9]  DÖNER, Berkay, et al. LUNA: efficient and topology-agnostic foundation model for EEG signal analysis. Advances in Neural Information Processing Systems, 2026, 38: 70682-70708.
