@@ -55,9 +55,9 @@ adding zero padding.
 ### Video features
 
 The following video foundation models have been used
-- OpenCLIP ((TODO cite))
-- Dino ((TODO cite))
-- VideoMAE ((TODO cite))
+- OpenCLIP [1]
+- Dino [2]
+- AlexNet [3]
 
 ## Classification
 
@@ -111,21 +111,21 @@ The ensemble gave the best test top-1 and a strong top-5, so it was chosen for t
 
 We also attempted other approaches:
 
-Besides the ridge regression on raw (decimated) EEG, we tried three learned models that operate on pretrained EEG foundation-model embeddings instead of the raw signal. They are in cca_classifier.ipynb, clip_classifier.ipynb and mlp_classifier.ipynb.
+Besides the ridge regression on raw (decimated) EEG, we tried three learned models that operate on pretrained EEG foundation-model embeddings instead of the raw signal. They are in `cca_classifier.ipynb`, `clip_classifier.ipynb` and `mlp_classifier.ipynb`.
 
-EEG input: per-trial embeddings from four sources (schubki_cbramod, schubki_labram, schubki_luna, schubki_labram_special)
+EEG input: per-trial embeddings from four sources (`schubki_cbramod`, `schubki_labram`, `schubki_luna`, `schubki_labram_special`)
 
-### 1. CCA classifier
+### 1. CCA [4] classifier
 
 Canonical correlation analysis between the EEG embeddings and the video features (CCA_Classifier in src/classifiers/cca.py). EEG trials and candidate videos are projected into the shared canonical space and scored by similarity there.
 
-### 2. CLIP-style contrastive model
+### 2. CLIP-style [5] contrastive model
 
-Two projection towers (EEG and video), each Linear(256) -> LayerNorm -> GELU -> Dropout -> ResidualBlock -> Linear(128), with L2-normalized outputs and a learnable temperature. It is trained with a symmetric InfoNCE loss with multiple positives (trials of the same video count as matches).
+Two projection towers (EEG and video), each `Linear(256) -> LayerNorm -> GELU -> Dropout -> ResidualBlock -> Linear(128)`, with L2-normalized outputs and a learnable temperature. It is trained with a symmetric InfoNCE [6] loss with multiple positives (trials of the same video count as matches).
 
 ### 3. MLP regression to video features
 
-An MLP (input -> 128 -> 64 -> 825, ReLU, dropout 0.3) that regresses the video feature vector from the EEG embedding with an MSE loss (full-batch, 20 epochs, AdamW lr 1e-3). Candidates are ranked by cosine similarity between the predicted and candidate video features.
+An MLP (`input -> 128 -> 64 -> 825, ReLU, dropout 0.3`) that regresses the video feature vector from the EEG embedding with an MSE loss (full-batch, 20 epochs, AdamW lr 1e-3). Candidates are ranked by cosine similarity between the predicted and candidate video features.
 
 ### Results
 
@@ -154,3 +154,9 @@ Train accuracy is measured on the training trials against all 1000 training vide
 
 ## References
 [1] Ilharco, G., Wortsman, M., Wightman, R., Gordon, C., Carlini, N., Taori, R., Dave, A., Shankar, V., Namkoong, H., Miller, J., Hajishirzi, H., Farhadi, A., & Schmidt, L. (2021). OpenCLIP (Version v0.1) [Computer software]. https://doi.org/10.5281/zenodo.5143773
+[2] OQUAB, Maxime, et al. Dinov2: Learning robust visual features without supervision. arXiv preprint arXiv:2304.07193, 2023.
+[3] KRIZHEVSKY, Alex; SUTSKEVER, Ilya; HINTON, Geoffrey E. Imagenet classification with deep convolutional neural networks. Advances in neural information processing systems, 2012, 25.
+[4] HOTELLING, Harold. Relations between two sets of variates. In: Breakthroughs in statistics: methodology and distribution. New York, NY: Springer New York, 1992. p. 162-190.
+[5] RADFORD, Alec, et al. Learning transferable visual models from natural language supervision. In: International conference on machine learning. PmLR, 2021. p. 8748-8763.
+[6] OORD, Aaron van den; LI, Yazhe; VINYALS, Oriol. Representation learning with contrastive predictive coding. arXiv preprint arXiv:1807.03748, 2018.
+
