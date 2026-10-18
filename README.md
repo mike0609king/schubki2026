@@ -16,9 +16,9 @@ We prepared three notebooks.
 1. `notebooks/preprocessing.ipynb`. This notebook is executed first to preprocess the given EEG data and to extract features.
 2. `notebooks/prepare_videos.ipynb`. This notebook prepares video features.
 3. `notebooks/ridge_regression.ipynb`. After running both notebooks, this notebook can be used to rank the videos.
+4. `schubki2026/predictions` contains the predictions.
 
-**Additional.**  We have other cca.ipynb, clip.ipynb, mlp.ipynb
-
+**Additional.**  We have other cca_classifier.ipynb, clip_classifier.ipynb, mlp_classifier.ipynb
 
 ## Preprocessing
 The given data was already preprocessed by applying a band pass filter and
