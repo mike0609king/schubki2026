@@ -6,9 +6,8 @@ machine learning pipeline.
 ## Structure
 - `src`. Contains source code to quickly access implementations, which are shared across notebooks.
 - `notebooks`. Contains notebooks. Most notebooks in this directory is for testing the machine learning pipeline.
-- `data`. This directory is used for preprocessed Data. The final predictions
-for each subject are available in this directory. Some directories such as the
-given data and intermediate results have not been pushed because of their size.
+- `data`. This directory is used for preprocessed data.
+- `preditions`. The final predictions for each subject is available in this directory.
 
 ## Reproducibility
 ((TODO explain reproducibility))
