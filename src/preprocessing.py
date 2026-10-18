@@ -1,20 +1,18 @@
 import mne
 from mne.io import Raw
+from scipy import signal
 
 
-def bandpass_filter(data: Raw, fmin: float = 0.1, fmax: float = 75.0) -> Raw:
-    ret = data.copy().filter(l_freq=fmin, h_freq=fmax, fir_design="firwin")
-    return ret
-
-
-def notch_filter(data: Raw, notch_freqs: float = 50.0) -> Raw:
-    """
-    Notch filter for powerline noise (50 Hz and/or 60 Hz)
-    """
-    raw_notched = data.copy().notch_filter(
-        freqs=notch_freqs, picks="eeg", fir_design="firwin", verbose=False
+def bandpass(x, sfreq: float, l_freq: float, h_freq: float, order=4):
+    sos = signal.butter(
+        order, [l_freq, h_freq], btype="bandpass", fs=sfreq, output="sos"
     )
-    return raw_notched
+    return signal.sosfiltfilt(sos, x, axis=-1)
+
+
+def notch(x, sfreq: float, freq: float = 50.0, q: float = 30.0):
+    b, a = signal.iirnotch(freq, q, fs=sfreq)
+    return signal.filtfilt(b, a, x, axis=-1)
 
 
 def smoothing(data: Raw, smooth_lp: float = 35.0) -> Raw:
@@ -37,9 +35,7 @@ def ica(data: Raw):
     proxy_eog = "Fp1" if "Fp1" in raw_eeg.ch_names else None
     if proxy_eog:
         print(f"Using {proxy_eog} as a proxy channel for EOG artifact detection...")
-        eog_inds, _ = ica.find_bads_eog(
-            raw_eeg, ch_name=proxy_eog, threshold=3.0
-        )
+        eog_inds, _ = ica.find_bads_eog(raw_eeg, ch_name=proxy_eog, threshold=3.0)
     else:
         eog_inds, _ = [], []
     print(f"EOG-like components (auto): {eog_inds}")
@@ -56,11 +52,3 @@ def ica(data: Raw):
     raw_clean = raw_eeg.copy()
     ica.apply(raw_clean)
     return raw_clean
-
-
-def preprocess(data: Raw) -> Raw:
-    data = bandpass_filter(data, fmin=0.1, fmax=75.0)
-    data = notch_filter(data, notch_freqs=50.0)
-    data = smoothing(data, smooth_lp=35.0)
-    data = ica(data)
-    return data
