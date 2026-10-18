@@ -10,16 +10,15 @@ machine learning pipeline.
 - `preditions`. The final predictions for each subject is available in this directory.
 
 ## Reproducibility
-((TODO explain reproducibility))
+Before starting the jupyter notebooks, put the `eeg-mind-reading-challenge` directory inside of the root of the repository. The executed jupyter notebook access the directory.
 
-## ML pipeline
+We prepared three notebooks.
+1. `notebooks/preprocessing.ipynb`. This notebook is executed first to preprocess the given EEG data and to extract features.
+2. `notebooks/prepare_videos.ipynb`. This notebook prepares video features.
+3. `notebooks/ridge_regression.ipynb`. After running both notebooks, this notebook can be used to rank the videos.
 
-The machine learning pipeline can be divided into
-- Preprocessing
-- Feature extraction and
-- Classification
+**Additional.**  We have other cca.ipynb, clip.ipynb, mlp.ipynb
 
-those will be explained in the following sections.
 
 ## Preprocessing
 The given data was already preprocessed by applying a band pass filter and
@@ -40,8 +39,7 @@ The machine learning model uses both extracted EEG features as well as features 
 **EEG foundation models.** The following three EEG foundation models have been used
 - CBraMod [7]
 - LaBraM [8]
-- modified LaBraM. LaBraM is modified to use 3 second long EEG signals instead of
-adding zero padding.
+- modified LaBraM. LaBraM is modified to use 3 second long EEG signals instead of adding zero padding.
 - LUNA [9]
 
 ### Video features
