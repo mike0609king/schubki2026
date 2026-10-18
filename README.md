@@ -147,11 +147,19 @@ Train accuracy is measured on the training trials against all 1000 training vide
 
 ## References
 [1]  CHERTI, Mehdi, et al. Reproducible scaling laws for contrastive language-image learning. In: 2023 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR). IEEE, 2023. p. 2818-2829.
+
 [2] OQUAB, Maxime, et al. Dinov2: Learning robust visual features without supervision. arXiv preprint arXiv:2304.07193, 2023.
+
 [3] KRIZHEVSKY, Alex; SUTSKEVER, Ilya; HINTON, Geoffrey E. Imagenet classification with deep convolutional neural networks. Advances in neural information processing systems, 2012, 25.
+
 [4] HOTELLING, Harold. Relations between two sets of variates. In: Breakthroughs in statistics: methodology and distribution. New York, NY: Springer New York, 1992. p. 162-190.
+
 [5] RADFORD, Alec, et al. Learning transferable visual models from natural language supervision. In: International conference on machine learning. PmLR, 2021. p. 8748-8763.
+
 [6] OORD, Aaron van den; LI, Yazhe; VINYALS, Oriol. Representation learning with contrastive predictive coding. arXiv preprint arXiv:1807.03748, 2018.
+
 [7] WANG, Jiquan, et al. Cbramod: A criss-cross brain foundation model for eeg decoding. In: International conference on learning representations. 2025. p. 75310-75346.
+
 [8] JIANG, Wei-Bang; ZHAO, Liming; LU, Bao-Liang. Large brain model for learning generic representations with tremendous EEG data in BCI. In: International Conference on Learning Representations. 2024. p. 16405-16426.
+
 [9]  DÖNER, Berkay, et al. LUNA: efficient and topology-agnostic foundation model for EEG signal analysis. Advances in Neural Information Processing Systems, 2026, 38: 70682-70708.
