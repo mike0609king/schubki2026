@@ -7,7 +7,7 @@ machine learning pipeline.
 - `src`. Contains source code to quickly access implementations, which are shared across notebooks.
 - `notebooks`. Contains notebooks. Most notebooks in this directory is for testing the machine learning pipeline.
 - `data`. This directory is used for preprocessed data.
-- `preditions`. The final predictions for each subject is available in this directory.
+- `predictions`. The final predictions for each subject is available in this directory.
 
 ## Reproducibility
 Before starting the jupyter notebooks, put the `eeg-mind-reading-challenge` directory inside of the root of the repository. The executed jupyter notebook access the directory.
@@ -45,13 +45,32 @@ The machine learning model uses both extracted EEG features as well as features 
 ### Video features
 
 The following video foundation models have been used
-- OpenCLIP [1]
-- Dino [2]
-- AlexNet [3]
+- OpenCLIP [1]: `features.3`
+- Dino [2]: `blocks.3`
+- AlexNet [3]: `visual.transformer.resblocks.7`
 
 ## Classification
 
 For each of 6 subjects we learn a linear mapping from video features to the EEG response (17 channels x 300 time samples after decimation). At test time we predict the EEG for each of the 102 candidate videos and compare it with the recorded EEG of each trial. For every trial, the candidates are ranked by Pearson correlation, giving a ranked candidate list per subject.
+
+## Design Choice: One Model per Subject
+
+We train a separate ridge model for each subject, using only that subject's own training trials, and evaluate it on that same subject's test trials. We did not pool all subjects into a single ridge model. Only the video-side preprocessing (scalers + PCA) is shared across subjects, because it depends on the stimuli and not on the brain recordings.
+
+* The EEG-to-video mapping is subject-specific. Scalp topography, signal amplitude, noise level, electrode contact and response latency differ between people. A single linear map from video features to EEG has to average over these differences, which blurs the pattern that matters for each subject.
+
+* Pooled baseline (comparison): We trained a single RidgeCV (same features and preprocessing, trials from Subjects 1 to 4 combined, selected alpha = 1e4) and used it to predict the test set of every subject. Test results on the four subjects with ground truth (102 candidates, chance top-1 = 0.0098, top-5 = 0.0490):
+
+| Subject | Per-subject: top-1 / top-5 / median rank | Pooled: top-1 / top-5 / median rank |
+|---------|------------------------------------------|-------------------------------------|
+| 01      |                   0.0588 / 0.2451 / 15.0 |              0.0686 / 0.2451 / 18.0 |
+| 02      |                   0.0392 / 0.2451 / 19.5 |              0.0588 / 0.1961 / 19.0 |
+| 03      |                   0.0490 / 0.1765 / 20.5 |              0.0490 / 0.1667 / 25.5 |
+| 04      |                   0.0490 / 0.1471 / 22.5 |              0.0392 / 0.1471 / 29.5 |
+| **Mean**|                   0.0490 / 0.2035 / 19.4 |              0.0539 / 0.1888 / 23.0 |
+
+The two setups perform similarly. Pooling gives slightly higher mean top-1 (0.054 vs. 0.049), but the per-subject models are slightly better on mean top-5 (0.204 vs. 0.189) and clearly better on median rank for 3 of 4 subjects.
+
 
 ### Model
 
