@@ -1,4 +1,4 @@
-# Schubki 2026
+# Schubki 2026 (Team: Telepathy)
 
 This document gives an explanation of the repository structure as well as the
 machine learning pipeline.
