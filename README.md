@@ -45,9 +45,9 @@ The machine learning model uses both extracted EEG features as well as features 
 ### Video features
 
 The following video foundation models have been used
-- OpenCLIP [1]: `features.3`
+- OpenCLIP [1]: `visual.transformer.resblocks.7`
 - Dino [2]: `blocks.3`
-- AlexNet [3]: `visual.transformer.resblocks.7`
+- AlexNet [3]: `features.3`
 
 ## Classification
 
